@@ -1,0 +1,14 @@
+﻿  Color_detection.cpp
+  DetectCircles.cpp
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+  Form1.cpp
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+  Matching_INFO.cpp
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+  my_sql.cpp
+  Send_DATA.cpp
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+  Size.cpp
+C:\HONG\HONG\Opencv_Ex\opencv\realprj\DB_head.h(4,10): error C1083: 포함 파일을 열 수 없습니다. 'mysql_driver.h': No such file or directory
+  코드를 생성하고 있습니다...
