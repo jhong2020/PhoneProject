@@ -1,25 +1,6 @@
-﻿  Color_detection.cpp
+﻿  DetectCircles.cpp
 C:\Users\woohy\Desktop\hi\hi\Form1.h(459,29): warning C4551: 함수 호출에 인수 목록이 없습니다.
-  DetectCircles.cpp
-C:\Users\woohy\Desktop\hi\hi\Form1.h(459,29): warning C4551: 함수 호출에 인수 목록이 없습니다.
-C:\Users\woohy\Desktop\hi\hi\DetectCircles.cpp(18,26): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  Form1.cpp
-C:\Users\woohy\Desktop\hi\hi\Form1.h(459,29): warning C4551: 함수 호출에 인수 목록이 없습니다.
-  Matcing_INFO.cpp
-C:\Users\woohy\Desktop\hi\hi\Form1.h(459,29): warning C4551: 함수 호출에 인수 목록이 없습니다.
-  Size.cpp
-C:\Users\woohy\Desktop\hi\hi\Form1.h(459,29): warning C4551: 함수 호출에 인수 목록이 없습니다.
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,74): warning C4244: '인수': 'double'에서 '_Tp'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,74): warning C4244:         with
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,74): warning C4244:         [
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,74): warning C4244:             _Tp=float
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,74): warning C4244:         ]
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,65): warning C4244: '인수': 'double'에서 '_Tp'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,65): warning C4244:         with
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,65): warning C4244:         [
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,65): warning C4244:             _Tp=float
-C:\Users\woohy\Desktop\hi\hi\Size.cpp(33,65): warning C4244:         ]
-  코드를 생성하고 있습니다...
+C:\Users\woohy\Desktop\hi\hi\DetectCircles.cpp(17,26): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 'cv::cuda::GpuMat::GpuMat': 함수가 네이티브로 컴파일되었습니다.
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 'cv::cuda::HostMem::HostMem': 함수가 네이티브로 컴파일되었습니다.
@@ -28,26 +9,6 @@ C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(327,1): w
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(327,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(328,1): warning C4793: '`anonymous namespace'::cvRound': 함수가 네이티브로 컴파일되었습니다.
 C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(328,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 'cv::cuda::GpuMat::GpuMat': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 'cv::cuda::HostMem::HostMem': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 'cv::cuda::GpuMat::GpuMat': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 'cv::cuda::HostMem::HostMem': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 'cv::cuda::GpuMat::GpuMat': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 'cv::cuda::HostMem::HostMem': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(327,1): warning C4793: '`anonymous namespace'::cvRound': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(327,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(328,1): warning C4793: '`anonymous namespace'::cvRound': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\fast_math.hpp(328,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 'cv::cuda::GpuMat::GpuMat': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(113,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 'cv::cuda::HostMem::HostMem': 함수가 네이티브로 컴파일되었습니다.
-C:\HONG\HONG\Opencv_Ex\opencv\build\include\opencv2\core\cuda.inl.hpp(511,1): warning C4793: 	관리 코드에서 지원되지 않는 내장 함수가 있습니다.
   Color_detection.obj : MSIL 모듈이 발견되었습니다. MSIL에 증분 링크를 사용할 수 없습니다. 전체 링크를 수행하고 있습니다.
 mysqlcppconn-static.lib(mysql_art_resultset.obj) : warning LNK4099: '' PDB를 'mysqlcppconn-static.lib(mysql_art_resultset.obj)' 또는 ''에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
 mysqlcppconn-static.lib(mysql_prepared_statement.obj) : warning LNK4099: '' PDB를 'mysqlcppconn-static.lib(mysql_prepared_statement.obj)' 또는 ''에서 찾을 수 없습니다. 디버그 정보가 없는 것처럼 개체를 링크합니다.
