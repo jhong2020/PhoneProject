@@ -14,7 +14,6 @@
 #include <vcclr.h>
 #include <thread>
 #include <memory>
-// #include "Form1.h"
 
 using namespace cv;
 using namespace std;
@@ -29,9 +28,13 @@ using namespace chrono;
 //using namespace System::Drawing;
 
 namespace Project1 {
+    using namespace cv;
+    using namespace std;
+    using namespace sql;
+    using namespace chrono;
 
     string getColorName(const Scalar& mean_color);
-    int hsv_Color();
+    //int hsv_Color();
     ref class Form1;
     int detectCircles(Form1^ form, VideoCapture& cap);
 
@@ -39,9 +42,12 @@ namespace Project1 {
     RotatedRect detectRectangle(vector<::Point> contour);
     bool isLogoContour(vector<::Point> contour, ::Size imageSize);
     bool size_detect(Form1^ form, VideoCapture& cap, double& width, double& height);
+
+    //int get_INFO(const string& name, double width, double height, int lensNum, string& detected_color, const vector<uchar>& imageBuffer);
 }
 
 // Database functions
-int get_INFO(double width, double height, int lensNum, const string& color , const std::vector<uchar>& imageBuffer);
-bool Matching_INFO(double width, double height, int lensNum, const string& color, const std::vector<uchar>& imageBuffer);
-void Input_And_Match_Info(void);
+int get_INFO(const string& name, double width, double height, int lensNum, string& detected_color, const vector<uchar>& imageBuffer);
+//bool Matching_INFO(const string& name, double width, double height, int lensNum, string& detected_color, const vector<uchar>& imageBuffer);
+//void Input_And_Match_Info(const string& name, double width, double height, int lensNum, const string& color, const std::vector<uchar>& imageBuffer);
+bool Matching_INFO(const string& name, double width, double height, int lensNum, string& detected_color, const vector<uchar>& imageBuffer, cv::Mat& capturedImage, std::string& matched_name,double& matched_width, double& matched_height, int& matched_lensNum, std::string& matched_color);

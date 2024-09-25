@@ -1,5 +1,5 @@
 #include "Form1.h"
-#include "my_sql.h"
+
 using namespace System;
 using namespace System::Windows::Forms;
 using namespace std;

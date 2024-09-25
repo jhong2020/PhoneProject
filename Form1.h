@@ -1,36 +1,25 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN
 #include "DB_head.h"
-#include <opencv2/opencv.hpp>
-#include <opencv2/videoio.hpp>
-#include <iostream>
-#include <chrono>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include "Size.h"
-#include <vcclr.h> // gcroot를 사용하기위해 포함
+#include "NameInputForm.h"
 #include "VideoCaptureWrapper.h"
-#include "DetectCircles.h"
+#include "Size.h"
+#include "hough_circle.h"
 #include "Color_detect.h"
-
+#include "Image_search.h"
 
 
 namespace Project1 {
 
     using namespace System;
-   
     using namespace System::ComponentModel;
     using namespace System::Collections;
     using namespace System::Windows::Forms;
     using namespace System::Data;
     using namespace System::Drawing;
-
+    using namespace chrono;
     using std::string;
     using std::vector;
-    using namespace chrono;
-
-
 
     public ref class Form1 : public System::Windows::Forms::Form
     {
@@ -79,7 +68,7 @@ namespace Project1 {
         bool sizeDetected = false;
         bool isCameraRunning = false;
         //MySql::Database* db;
-        int lensNum = 0;
+
         void InitializeComponent(void)
         {
             this->components = gcnew System::ComponentModel::Container();
@@ -90,26 +79,26 @@ namespace Project1 {
 
             // 실행 시작 버튼
             this->startButton = gcnew System::Windows::Forms::Button();
-            this->startButton->Location = System::Drawing::Point(100, 150);  // 버튼 위치 설정
+            this->startButton->Location = System::Drawing::Point(100, 200);  // 버튼 위치 설정
             this->startButton->Size = System::Drawing::Size(100, 50);        // 버튼 크기 설정
-            this->startButton->Text = L"영상 촬영시작";
+            this->startButton->Text = L"등  록";
 
             this->startButton->Click += gcnew System::EventHandler(this, &Form1::startButton_Click);
             this->Controls->Add(this->startButton);
 
             // 실행 중지 버튼
-            this->stopButton = gcnew System::Windows::Forms::Button();
-            this->stopButton->Location = System::Drawing::Point(220, 250);   // 버튼 위치 설정
-            this->stopButton->Size = System::Drawing::Size(100, 50);         // 버튼 크기 설정
-            this->stopButton->Text = L"실행 중지";
-            this->stopButton->Click += gcnew System::EventHandler(this, &Form1::stopButton_Click);
-            this->Controls->Add(this->stopButton);
+            //this->stopButton = gcnew System::Windows::Forms::Button();
+            //this->stopButton->Location = System::Drawing::Point(220, 250);   // 버튼 위치 설정
+            //this->stopButton->Size = System::Drawing::Size(100, 50);         // 버튼 크기 설정
+            //this->stopButton->Text = L"실행 중지";
+            //this->stopButton->Click += gcnew System::EventHandler(this, &Form1::stopButton_Click);
+            //this->Controls->Add(this->stopButton);
 
             // 매칭 버튼
             this->matchingButton = gcnew System::Windows::Forms::Button();
-            this->matchingButton -> Location = System::Drawing::Point(350, 150);
+            this->matchingButton->Location = System::Drawing::Point(350, 200);
             this->matchingButton->Size = System::Drawing::Size(100, 50);
-            this->matchingButton->Text = L"재검출";
+            this->matchingButton->Text = L"매   칭";
             this->matchingButton->Click += gcnew System::EventHandler(this, &Form1::matchingButton_Click);
             this->Controls->Add(this->matchingButton);
 
@@ -167,61 +156,28 @@ namespace Project1 {
                 this->statusLabel->Text = L"현재 상태: 실행 중";  // Label 텍스트 업데이트
                 this->statusIndicator->BackColor = System::Drawing::Color::Green;  // 초록색 원으로 변경
                 this->statusIndicator->Invalidate(); // Paint 이벤트를 트리거하여 원을 다시 그림
-
-                StartDetectionFlow();
-
-
+                DetectedPhone();
             }
         }
 
-        void stopButton_Click(System::Object^ sender, System::EventArgs^ e)
+        /*void stopButton_Click(System::Object^ sender, System::EventArgs^ e)
         {
             if (isCameraRunning)
             {
                 StopCamera();
             }
-        }
+        }*/
 
         void matchingButton_Click(System::Object^ sender, System::EventArgs^ e)
         {
-            if (cap == nullptr)
-            {
-                AppendTextToOutputBox("캡쳐 객체가 초기화되지 않았습니다.");
-                cap = new VideoCaptureWrapper();
-            }
-
             if (!isCameraRunning)
             {
-                if(!cap->open(0))
-                {
-
-                        AppendTextToOutputBox("카메라를 열 수 없습니다.");
-                        return;
-                }
                 isCameraRunning = true;
                 this->statusLabel->Text = L"현재 상태: 매칭 중";  // Label 텍스트 업데이트
                 this->statusIndicator->BackColor = System::Drawing::Color::FromArgb(255, 165, 0);  // 주황색 원으로 변경
                 this->statusIndicator->Invalidate();
-
-
                 reDetectPhone();
-
-
             }
-        }
-
-
-        void StartDetectionFlow()
-        {
-            if (!cap->open(0))
-            {
-                AppendTextToOutputBox("카메라를 열 수 없습니다.");
-                return;
-            }
-
-            DetectedPhone();
-
-
         }
 
         // 이미지를 메모리에 저장하고 주소값을 반환하는 함수
@@ -232,186 +188,134 @@ namespace Project1 {
             return buffer;
         }
 
-        
-
-
+        // 검출
         void DetectedPhone()
         {
-            
-            Mat img_color, img_gray, img_blur, img_edges, img_contours, img_roi;
-            vector<vector<cv::Point>> contours;
-            vector<Vec4i> hierarchy;
-            vector<Vec3f> circles;
+            Mat img_color;
+            vector<uchar> imageBuffer;
             int stage = 0;
             double width = 0.0, height = 0.0;
             int lensNum = 0;
+            int frameCounter = 0;
             bool sizeDetected = false;
             bool circleDetected = false;
-            auto last_output_time = steady_clock::now();
+            string detectedColor;
+
+            if (cap == nullptr)
+            {
+                cap = new VideoCaptureWrapper;
+            }
 
             if (!cap->open(0)) {
                 AppendTextToOutputBox("카메라를 열 수 없습니다.");
                 return;
             }
 
-            while (true)
+            while (1)
             {
-                
-                bool ret = cap->read(img_color);
-                if (!ret || img_color.empty()) {
-                    AppendTextToOutputBox("캡쳐 실패 또는 빈 이미지");
-                    continue;
-                }
 
                 if (stage == 0)
                 {
-                    sizeDetected = size_detect(this, cap->getCapture(),width, height);
-                    imshow("Detection", img_color);
+                    sizeDetected = size_detect(this, cap->getCapture(), width, height);
+                    //imshow("Detection", img_color);
                     if (sizeDetected)
                     {
                         AppendTextToOutputBox("크기 검출 성공, 원 검출로 넘어갑니다.");
-                        
+                        stage = 1;
                         this->statusLabel->Text = L"현재 상태: 원 검출 중";
                         this->statusIndicator->BackColor = System::Drawing::Color::Green;
                         this->statusIndicator->Invalidate();
-                        stage = 1; // 다음 단계로 설정
-                      
                     }
-
-                    if (waitKey(1) == 27) // ESC 키로 단계 전환
-                    {
-                        stage = 1; // 강제 다음 단계로
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("사이즈 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 사이즈 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                        sizeDetected = false;
+                        if (sizeDetected == false) {
+                            StopCamera();
+                            break;
+                        }
                     }
                 }
                 else if (stage == 1)
                 {
-                    if (!circleDetected) // 렌즈 검출이 아직 되지 않은 경우에만 실행
+                    circleDetected = hough_circle(this, cap->getCapture(), lensNum);
+                    if (circleDetected)
                     {
-                        cvtColor(img_color, img_gray, COLOR_BGR2GRAY);
-                        medianBlur(img_gray, img_gray, 3);
-                        HoughCircles(img_gray, circles, HOUGH_GRADIENT, 1, img_gray.rows / 8, 100, 50, 0, 0);
-
-                       int lensNum = static_cast<int>(circles.size());
-
-                        AppendTextToOutputBox("검출된 렌즈 개수 : " + lensNum.ToString());
-                        for (size_t i = 0; i < circles.size(); i++) {
-                            Vec3f c = circles[i];
-                            cv::Point center(cvRound(c[0]), cvRound(c[1]));
-                            int radius = cvRound(c[2]);
-                            circle(img_color, center, radius, Scalar(0, 255, 0), 2);
-                            circle(img_color, center, 2, Scalar(0, 0, 255), 3);
-                        }
-
-                        AppendTextToOutputBox("렌즈 검출 완료. ESC 키를 눌러서 다음 단계로");
-                        imshow("Detection", img_color);
-
-                        if (!circles.empty()) // 렌즈 검출이 성공적으로 이루어졌을 때
-                        {
-                            circleDetected = true; // 한 번만 수행하도록 플래그 설정
-                        }
+                        AppendTextToOutputBox("원 성공, 컬러 검출로 넘어갑니다.");
+                        stage = 2;
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 중";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Green;
+                        this->statusIndicator->Invalidate();
                     }
-
-                    if (circleDetected && waitKey(1) == 27) // 렌즈 검출 후 ESC 키로 다음 단계로
-                    {
-                        if (stage == 1)
-                        {
-                            stage = 2;
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("원 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 원 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                        circleDetected = false;
+                        if (circleDetected == false) {
+                            StopCamera();
+                            break;
                         }
                     }
                 }
+
                 else if (stage == 2)
                 {
-                    cvtColor(img_color, img_gray, COLOR_BGR2GRAY);
-                    GaussianBlur(img_gray, img_blur, cv::Size(5, 5), 0);
-                    Canny(img_blur, img_edges, 50, 150);
-                    findContours(img_edges, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+                    detectedColor = color_detect(this, cap->getCapture());
 
-                    img_contours = img_color.clone();
+                    if (!detectedColor.empty()) { // 검출 성공 시
+                        stage = 3;
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 중";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Green;
+                        this->statusIndicator->Invalidate();
+                    }
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("컬러 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                    }
+                }
 
-                    if (!contours.empty()) {
-                        size_t largest_contour_index = 0;
-                        double largest_area = 0;
+                else if (stage == 3)
+                {
+                    bool ret = cap->read(img_color);
+                    if (!ret) {
+                        cout << "화면 안켜짐" << endl;
+                    }
 
-                        for (size_t i = 0; i < contours.size(); i++) {
-                            double area = contourArea(contours[i]);
-                            if (area > largest_area) {
-                                largest_area = area;
-                                largest_contour_index = i;
-                            }
-                        }
+                    imshow("Detection", img_color);
 
-                        Mat mask = Mat::zeros(img_color.size(), CV_8UC1);
-                        drawContours(mask, contours, (int)largest_contour_index, Scalar(255), FILLED);
+                    imageBuffer = CaptureImageToMemory(img_color);
+                    AppendTextToOutputBox("원본 이미지 메모리 저장 완료 : " + imageBuffer.size().ToString());
 
-                        img_color.copyTo(img_roi, mask);
+                    stage = 4;
+                }
 
-                        Scalar mean_color = mean(img_roi, mask);
+                else if (stage == 4)
+                {
+                    Project1::NameInputForm^ nameInputForm = gcnew Project1::NameInputForm();
+                    if (nameInputForm->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
+                        // System::String^ -> std::string 변환
+                        System::String^ managedName = nameInputForm->GetName();
+                        IntPtr ptrToNativeString = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(managedName);
+                        std::string nameStd = static_cast<const char*>(ptrToNativeString.ToPointer());
+                        System::Runtime::InteropServices::Marshal::FreeHGlobal(ptrToNativeString);
 
-                        int B = static_cast<int>(mean_color[0]);
-                        int G = static_cast<int>(mean_color[1]);
-                        int R = static_cast<int>(mean_color[2]);
-
-                        string detected_color;
-                        if (B >= 120 && B <= 180 && G < 100 && R < 100) {
-                            detected_color = "Blue";
+                        // get_INFO 함수 호출 시 std::string을 사용                  
+                        if (get_INFO(nameStd, width, height, lensNum, detectedColor, imageBuffer) == 1) {
+                            AppendTextToOutputBox("DB에 데이터를 전송했습니다.");
+                            AppendTextToOutputBox("카메라 종료");
+                            stage = 0;
+                            this->statusLabel->Text = L"대기중";
+                            this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                            this->statusIndicator->Invalidate();
+                            StopCamera();
+                            break;
                         }
-                        else if (G >= 120 && G <= 180 && B < 100 && R < 100) {
-                            detected_color = "Green";
-                        }
-                        else if (R >= 150 && R <= 200 && B < 100 && G < 100) {
-                            detected_color = "Red";
-                        }
-                        else if (B >= 220 && G >= 220 && R >= 220) {
-                            detected_color = "White";  // 흰색
-                        }
-                        else if (B < 50 && G < 50 && R < 50) {
-                            detected_color = "Black";  // 검은색
-                        }
-                        else if (B >= 150 && B <= 180 && G >= 150 && G <= 200 && R >= 150 && R <= 200) {
-                            detected_color = "Yellow";  // 노란색
-                        }
-                        else if (B >= 180 && B <= 220 && G < 100 && R >= 150 && R <= 220) {
-                            detected_color = "Magenta";  // 마젠타색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 180 && G <= 220 && R < 100) {
-                            detected_color = "Cyan";  // 청록색
-                        }
-                        else if (B >= 100 && B <= 160 && G < 100 && R >= 100 && R <= 180) {
-                            detected_color = "Purple";  // 보라색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 150 && G <= 200 && R >= 200 && R <= 230) {
-                            detected_color = "Pink";  // 핑크색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 180 && G <= 220 && R < 200) {
-                            detected_color = "Silver";  // 은색
-                        }
-                        else if (B >= 150 && B <= 200 && G >= 140 && G <= 180 && R >= 180 && R <= 220) {
-                            detected_color = "Gold";  // 골드색
-                        }
-                        else if (B >= 90 && B <= 130 && G >= 90 && G <= 130 && R >= 90 && R <= 130) {
-                            detected_color = "Gray";  // 회색
-                        }
-                        else {
-                            detected_color = "Unknown";
-                        }
-
-                        AppendTextToOutputBox("Color: " + gcnew System::String(detected_color.c_str()) +
-                            " (B: " + B.ToString() + ", G: " + G.ToString() + ", R: " + R.ToString() + ")");
-                        drawContours(img_contours, contours, (int)largest_contour_index, Scalar(0, 255, 0), 2);
-                        AppendTextToOutputBox("색 검출 완료");
-
-                        imshow("Detection", img_contours);
-
-                        std::vector<uchar> imageBuffer = CaptureImageToMemory(img_color);
-                        AppendTextToOutputBox("원본 이미지 메모리 저장 완료 : " + imageBuffer.size().ToString());
-
-                        string name = "s";
-                        get_INFO(width, height, lensNum, detected_color, imageBuffer);
-                       /* db->InsertData(width,height, lensNum, detected_color, imageBuffer);*/
-
-                        waitKey(0); // 색 검출 완료 후 프로그램 종료를 기다림
-                        AppendTextToOutputBox("프로그램 종료.");
-                        return;
                     }
                 }
             }
@@ -419,34 +323,33 @@ namespace Project1 {
 
         void reDetectPhone()
         {
-            if (cap == nullptr)
-            {
-                AppendTextToOutputBox("캡쳐 객체가 초기화되지 않았습니다.");
-                return;
-            }
-            Mat img_color, img_gray, img_blur, img_edges, img_contours, img_roi;
-            vector<vector<cv::Point>> contours;
-            vector<Vec4i> hierarchy;
-            vector<Vec3f> circles;
-            int stage = 0;
+
+            Mat img_color, capturedImage;
+            vector<uchar> imageBuffer;
+
+            int stage = 0, lensNum = 0;
             double width = 0.0, height = 0.0;
-            int lensNum = 0;
             bool sizeDetected = false;
             bool circleDetected = false;
-            auto last_output_time = steady_clock::now();
+            bool Matcing_img = false;
+            string detectedcolor;  // 검출된 색상 변수 선언
+            std::string nameStd;
 
-            
+            if (cap == nullptr)
+            {
+                cap = new VideoCaptureWrapper;
+            }
 
             if (!cap->open(0)) {
                 AppendTextToOutputBox("카메라를 열 수 없습니다.");
+                StopCamera();
                 return;
             }
 
             while (true)
             {
-
-                bool ret = cap->read(img_color);
-                if (!ret || img_color.empty()) {
+                bool ret = cap->read(capturedImage);
+                if (!ret || capturedImage.empty()) {
                     AppendTextToOutputBox("캡쳐 실패 또는 빈 이미지");
                     continue;
                 }
@@ -454,178 +357,132 @@ namespace Project1 {
                 if (stage == 0)
                 {
                     sizeDetected = size_detect(this, cap->getCapture(), width, height);
-                    imshow("Detection", img_color);
                     if (sizeDetected)
                     {
                         AppendTextToOutputBox("크기 검출 성공, 원 검출로 넘어갑니다.");
-
+                        stage = 1;
                         this->statusLabel->Text = L"현재 상태: 원 검출 중";
                         this->statusIndicator->BackColor = System::Drawing::Color::Green;
                         this->statusIndicator->Invalidate();
-                        stage = 1; // 다음 단계로 설정
-
                     }
-
-                    if (waitKey(1) == 27) // ESC 키로 단계 전환
-                    {
-                        stage = 1; // 강제 다음 단계로
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("사이즈 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 사이즈 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                        sizeDetected = false;
+                        if (sizeDetected == false) {
+                            StopCamera();
+                            break;
+                        }
                     }
                 }
                 else if (stage == 1)
                 {
-                    if (!circleDetected) // 렌즈 검출이 아직 되지 않은 경우에만 실행
+                    circleDetected = hough_circle(this, cap->getCapture(), lensNum);
+                    if (circleDetected)
                     {
-                        cvtColor(img_color, img_gray, COLOR_BGR2GRAY);
-                        medianBlur(img_gray, img_gray, 3);
-                        HoughCircles(img_gray, circles, HOUGH_GRADIENT, 1, img_gray.rows / 8, 100, 50, 0, 0);
-
-                        int lensNum = circles.size();
-
-                        AppendTextToOutputBox("검출된 렌즈 개수 : " + lensNum.ToString());
-                        for (size_t i = 0; i < circles.size(); i++) {
-                            Vec3f c = circles[i];
-                            cv::Point center(cvRound(c[0]), cvRound(c[1]));
-                            int radius = cvRound(c[2]);
-                            circle(img_color, center, radius, Scalar(0, 255, 0), 2);
-                            circle(img_color, center, 2, Scalar(0, 0, 255), 3);
-                        }
-
-                        AppendTextToOutputBox("렌즈 검출 완료. ESC 키를 눌러서 다음 단계로");
-                        imshow("Detection", img_color);
-
-                        if (!circles.empty()) // 렌즈 검출이 성공적으로 이루어졌을 때
-                        {
-                            circleDetected = true; // 한 번만 수행하도록 플래그 설정
+                        AppendTextToOutputBox("원 성공, 컬러 검출로 넘어갑니다.");
+                        stage = 2;
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 중";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Green;
+                        this->statusIndicator->Invalidate();
+                    }
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("원 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 원 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                        circleDetected = false;
+                        if (circleDetected == false) {
+                            StopCamera();
+                            break;
                         }
                     }
 
-                    if (circleDetected && waitKey(1) == 27) // 렌즈 검출 후 ESC 키로 다음 단계로
-                    {
-                        if (stage == 1)
-                        {
-                            stage = 2;
-                        }
-                    }
                 }
+
                 else if (stage == 2)
                 {
-                    cvtColor(img_color, img_gray, COLOR_BGR2GRAY);
-                    GaussianBlur(img_gray, img_blur, cv::Size(5, 5), 0);
-                    Canny(img_blur, img_edges, 50, 150);
-                    findContours(img_edges, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+                    detectedcolor = color_detect(this, cap->getCapture());
 
-                    img_contours = img_color.clone();
+                    if (!detectedcolor.empty()) { // 검출 성공 시
+                        stage = 3;
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 중";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Green;
+                        this->statusIndicator->Invalidate();
+                    }
+                    else { // 검출 실패 시
+                        AppendTextToOutputBox("컬러 검출 실패.");
+                        this->statusLabel->Text = L"현재 상태: 컬러 검출 실패";
+                        this->statusIndicator->BackColor = System::Drawing::Color::Red;
+                        this->statusIndicator->Invalidate();
+                        StopCamera();
+                    }
+                }
 
-                    if (!contours.empty()) {
-                        size_t largest_contour_index = 0;
-                        double largest_area = 0;
+                else if (stage == 3) {
+                    bool ret = cap->read(capturedImage);
+                    if (!ret) {
+                        cout << "화면 안켜짐" << endl;
+                    }
 
-                        for (size_t i = 0; i < contours.size(); i++) {
-                            double area = contourArea(contours[i]);
-                            if (area > largest_area) {
-                                largest_area = area;
-                                largest_contour_index = i;
-                            }
-                        }
+                    imshow("Detection", capturedImage);
+                    imageBuffer = CaptureImageToMemory(capturedImage);
+                    AppendTextToOutputBox("복사본 메모리 저장 완료 : " + imageBuffer.size().ToString());
+                    stage = 4;
+                }
 
-                        Mat mask = Mat::zeros(img_color.size(), CV_8UC1);
-                        drawContours(mask, contours, (int)largest_contour_index, Scalar(255), FILLED);
+                else if (stage == 4)
+                {
+                    /*Matcing_img = compareImages(img_color, capturedImage);*/
+                    std::string matched_name;
+                    double matched_width = 0.0, matched_height = 0.0;
+                    int matched_lensNum = 0;
+                    std::string matched_color;
 
-                        img_color.copyTo(img_roi, mask);
-
-                        Scalar mean_color = mean(img_roi, mask);
-
-                        int B = static_cast<int>(mean_color[0]);
-                        int G = static_cast<int>(mean_color[1]);
-                        int R = static_cast<int>(mean_color[2]);
-
-                        string detected_color;
-                        if (B >= 120 && B <= 180 && G < 100 && R < 100) {
-                            detected_color = "Blue";
-                        }
-                        else if (G >= 120 && G <= 180 && B < 100 && R < 100) {
-                            detected_color = "Green";
-                        }
-                        else if (R >= 150 && R <= 200 && B < 100 && G < 100) {
-                            detected_color = "Red";
-                        }
-                        else if (B >= 220 && G >= 220 && R >= 220) {
-                            detected_color = "White";  // 흰색
-                        }
-                        else if (B < 50 && G < 50 && R < 50) {
-                            detected_color = "Black";  // 검은색
-                        }
-                        else if (B >= 150 && B <= 180 && G >= 150 && G <= 200 && R >= 150 && R <= 200) {
-                            detected_color = "Yellow";  // 노란색
-                        }
-                        else if (B >= 180 && B <= 220 && G < 100 && R >= 150 && R <= 220) {
-                            detected_color = "Magenta";  // 마젠타색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 180 && G <= 220 && R < 100) {
-                            detected_color = "Cyan";  // 청록색
-                        }
-                        else if (B >= 100 && B <= 160 && G < 100 && R >= 100 && R <= 180) {
-                            detected_color = "Purple";  // 보라색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 150 && G <= 200 && R >= 200 && R <= 230) {
-                            detected_color = "Pink";  // 핑크색
-                        }
-                        else if (B >= 180 && B <= 220 && G >= 180 && G <= 220 && R < 200) {
-                            detected_color = "Silver";  // 은색
-                        }
-                        else if (B >= 150 && B <= 200 && G >= 140 && G <= 180 && R >= 180 && R <= 220) {
-                            detected_color = "Gold";  // 골드색
-                        }
-                        else if (B >= 90 && B <= 130 && G >= 90 && G <= 130 && R >= 90 && R <= 130) {
-                            detected_color = "Gray";  // 회색
-                        }
-                        else {
-                            detected_color = "Unknown";
-                        }
-
-                        AppendTextToOutputBox("Color: " + gcnew System::String(detected_color.c_str()) +
-                            " (B: " + B.ToString() + ", G: " + G.ToString() + ", R: " + R.ToString() + ")");
-                        drawContours(img_contours, contours, (int)largest_contour_index, Scalar(0, 255, 0), 2);
-                        AppendTextToOutputBox("색 검출 완료");
-
-                        imshow("Detection", img_contours);
-
-                        std::vector<uchar> imageBuffer = CaptureImageToMemory(img_color);
-                        AppendTextToOutputBox("원본 이미지 메모리 저장 완료 : " + imageBuffer.size().ToString());
-
-                       
-                        Matching_INFO(width, height, lensNum, detected_color, imageBuffer);
-
-
-                        waitKey(0); // 색 검출 완료 후 프로그램 종료를 기다림
-                        AppendTextToOutputBox("프로그램 종료.");
-                        return;
+                    bool match_found = Matching_INFO(nameStd, width, height, lensNum, detectedcolor, imageBuffer, capturedImage, matched_name, matched_width, matched_height, matched_lensNum, matched_color);
+                    if (match_found)
+                    {
+                        AppendTextToOutputBox("입력한 정보와 일치하는 DB 정보를 찾았습니다.");
+                        AppendTextToOutputBox("기종 : " + gcnew System::String(matched_name.c_str()));
+                        AppendTextToOutputBox("Width : " + matched_width.ToString());
+                        AppendTextToOutputBox("Height : " + matched_height.ToString());
+                        AppendTextToOutputBox("LensNum : " + matched_lensNum.ToString());
+                        AppendTextToOutputBox("Color : " + gcnew System::String(matched_color.c_str()));
+                        StopCamera();
+                        break;
+                    }
+                    else
+                    {
+                        AppendTextToOutputBox("입력한 정보와 일치하는 DB 정보를 찾지 못했습니다.");
+                        StopCamera();
+                        break;
                     }
                 }
             }
         }
-		
+
         void StopCamera()
         {
             isCameraRunning = false;
             stopCapture = true;  // 캡처 중지를 위한 플래그 설정
 
-            
             if (cap != nullptr)
             {
-                cap->clear();
+                cap->release();
                 delete cap;
                 cap = nullptr;
+                if (cap == nullptr) {
+                    AppendTextToOutputBox("카메라 초기화 완료");
+                };
             }
 
-            
             cv::destroyAllWindows();
 
             this->statusLabel->Text = L"현재 상태: 정지";
             this->statusIndicator->BackColor = System::Drawing::Color::Red;
             this->statusIndicator->Invalidate();
         }
-
-
-    };
+    }; // NAMESPACE
 }
